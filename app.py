@@ -11,7 +11,7 @@ import io
 load_dotenv()
 
 # Configure OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Page configuration
 st.set_page_config(
@@ -141,7 +141,7 @@ def parse_resume_from_text(text):
         }}
         """
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {
@@ -183,7 +183,7 @@ def update_experience_with_ai(job_description, current_experience):
         Make the descriptions more targeted and relevant to the job requirements.
         """
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {
