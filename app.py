@@ -7,6 +7,14 @@ import PyPDF2
 import pdfplumber
 import io
 
+# Page configuration - MUST be the first Streamlit command
+st.set_page_config(
+    page_title="AI Resume Updater",
+    page_icon="📄",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # Load environment variables for local development
 load_dotenv()
 
@@ -21,24 +29,14 @@ def get_openai_client():
             api_key = os.getenv("OPENAI_API_KEY")
         
         if not api_key:
-            st.error("❌ OpenAI API key not found. Please add it to Streamlit secrets or environment variables.")
             return None
             
         return openai.OpenAI(api_key=api_key)
     except Exception as e:
-        st.error(f"❌ Error initializing OpenAI client: {e}")
         return None
 
 # Initialize OpenAI client
 client = get_openai_client()
-
-# Page configuration
-st.set_page_config(
-    page_title="AI Resume Updater",
-    page_icon="📄",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Custom CSS for better styling
 st.markdown("""
