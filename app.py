@@ -7,11 +7,30 @@ import PyPDF2
 import pdfplumber
 import io
 
-# Load environment variables
+# Load environment variables for local development
 load_dotenv()
 
-# Configure OpenAI
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Configure OpenAI - use Streamlit secrets for production, env vars for local development
+def get_openai_client():
+    """Get OpenAI client with proper API key handling"""
+    try:
+        # Try to get API key from Streamlit secrets first (production)
+        api_key = st.secrets.get("OPENAI_API_KEY")
+        if not api_key:
+            # Fallback to environment variable (local development)
+            api_key = os.getenv("OPENAI_API_KEY")
+        
+        if not api_key:
+            st.error("❌ OpenAI API key not found. Please add it to Streamlit secrets or environment variables.")
+            return None
+            
+        return openai.OpenAI(api_key=api_key)
+    except Exception as e:
+        st.error(f"❌ Error initializing OpenAI client: {e}")
+        return None
+
+# Initialize OpenAI client
+client = get_openai_client()
 
 # Page configuration
 st.set_page_config(
@@ -100,6 +119,10 @@ def extract_text_from_pdf(pdf_file):
 def parse_resume_from_text(text):
     """Parse resume text and extract structured information"""
     try:
+        if not client:
+            st.error("❌ OpenAI client not initialized. Please check your API key configuration.")
+            return None
+            
         prompt = f"""
         Please parse the following resume text and extract the information in JSON format.
         Focus on extracting:
@@ -167,6 +190,10 @@ def parse_resume_from_text(text):
 def update_experience_with_ai(job_description, current_experience):
     """Update only the work experience section based on job description"""
     try:
+        if not client:
+            st.error("❌ OpenAI client not initialized. Please check your API key configuration.")
+            return None, "OpenAI client not available"
+            
         prompt = f"""
         Based on the following job description, please update and optimize the work experience descriptions to better match the job requirements.
         Focus on making the experience descriptions more relevant to the target job while maintaining truthfulness.
@@ -279,6 +306,24 @@ def display_resume(resume):
     st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
+    # Check if OpenAI client is available
+    if not client:
+        st.error("""
+        ## ❌ OpenAI API Key Not Configured
+        
+        Please add your OpenAI API key to Streamlit secrets:
+        
+        1. Go to your app's **Settings** → **Secrets**
+        2. Add the following configuration:
+        ```toml
+        OPENAI_API_KEY = "your_actual_openai_api_key_here"
+        ```
+        3. Save and redeploy your app
+        
+        Get your API key from: https://platform.openai.com/api-keys
+        """)
+        return
+
     # Initialize session state
     if 'resume' not in st.session_state:
         st.session_state.resume = None
